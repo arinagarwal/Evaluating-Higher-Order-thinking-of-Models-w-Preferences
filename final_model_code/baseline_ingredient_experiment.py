@@ -1,0 +1,454 @@
+"""
+Baseline Ingredient Experiment
+==============================
+Generates recipes using Llama 3.1 8B Instruct (4-bit quantized) and measures
+how often banned ingredients appear in the output.
+
+Usage:
+    export HF_TOKEN="your_token_here"
+    python3 baseline_ingredient_experiment.py
+"""
+
+import os
+import json
+import torch
+import matplotlib
+matplotlib.use("Agg")  # headless-safe backend
+import matplotlib.pyplot as plt
+import numpy as np
+from datetime import datetime
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+# ── Configuration ──────────────────────────────────────────
+MODEL_ID = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+BANNED_INGREDIENTS = ["garlic", "butter", "heavy cream", "soy sauce", "sugar"]
+NUM_EVAL_PROMPTS = 100
+TEMPERATURE = 0.8
+MAX_TOKENS = 512
+PROMPT_TEMPLATE = (
+    "Write a recipe for {dish}. Include a title, an Ingredients: section "
+    "listing all ingredients, and step-by-step cooking instructions."
+)
+
+# ── HF Token ───────────────────────────────────────────────
+try:
+    from google.colab import userdata
+    HF_TOKEN = userdata.get("HF_TOKEN")
+except Exception:
+    HF_TOKEN = os.environ.get("HF_TOKEN", "")
+assert HF_TOKEN, "Set HF_TOKEN via environment variable."
+
+# ── Model Loading ──────────────────────────────────────────
+print(f"Loading model: {MODEL_ID}")
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.bfloat16,
+)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=HF_TOKEN)
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    token=HF_TOKEN,
+    quantization_config=bnb_config,
+    device_map="auto",
+)
+print(f"Model loaded: {MODEL_ID}")
+
+# ── Dish List ──────────────────────────────────────────────
+DISHES: list[str] = [
+    # ── Italian (1–50)
+    "Margherita Pizza", "Spaghetti Carbonara", "Fettuccine Alfredo",
+    "Lasagna Bolognese", "Risotto alla Milanese", "Osso Buco",
+    "Chicken Parmigiana", "Eggplant Parmigiana", "Bruschetta al Pomodoro",
+    "Caprese Salad", "Minestrone Soup", "Penne Arrabbiata",
+    "Gnocchi with Pesto", "Tiramisu", "Panna Cotta", "Cannoli",
+    "Focaccia Bread", "Prosciutto e Melone", "Vitello Tonnato", "Ribollita",
+    "Cacio e Pepe", "Amatriciana Pasta", "Saltimbocca alla Romana",
+    "Carpaccio di Manzo", "Arancini", "Panzanella Salad",
+    "Tortellini in Brodo", "Ravioli di Ricotta e Spinaci",
+    "Polenta with Mushroom Ragu", "Cioppino", "Pasta e Fagioli",
+    "Bistecca alla Fiorentina", "Caponata", "Insalata di Farro",
+    "Limoncello Cake", "Affogato", "Pappardelle al Cinghiale",
+    "Bucatini all'Amatriciana", "Supplì al Telefono", "Fritto Misto di Mare",
+    "Involtini di Melanzane", "Zuppa Toscana",
+    "Orecchiette con Cime di Rapa", "Pasta alla Norma", "Acqua Pazza",
+    # ── Japanese (51–100)
+     "Teriyaki Salmon", "Gyoza", "Takoyaki",
+    "Okonomiyaki", "Yakitori Skewers", "Chirashi Bowl", "Edamame",
+    "Tonkatsu with Cabbage", "Unagi Don", "Matcha Ice Cream", "Mochi",
+    "Dorayaki", "Tamagoyaki", "Chawanmushi", "Shabu-Shabu", "Sukiyaki",
+    "Karaage Chicken", "Soba Noodle Salad", "Onigiri", "Oyakodon",
+    "Katsudon", "Nikujaga", "Natto with Rice", "Agedashi Tofu", "Yaki Udon",
+    "Japanese Curry Rice", "Tsukemen", "Kakiage Tempura", "Kinpira Gobo",
+    "Niku Udon", "Tamago Sushi", "Shrimp Tempura", "Tonjiru", "Hayashi Rice",
+    "Dango", "Yakisoba", "Korokke", "Mentaiko Pasta", "Omurice",
+    "Tori Paitan Ramen", "Shoyu Ramen", "Zaru Soba", "Kitsune Udon",
+    "Wagyu Beef Tataki", "Japanese Cheesecake",
+    # ── Mexican (101–150)
+    "Chiles Rellenos", "Pozole Rojo",
+    "Tamales de Pollo", "Carnitas", "Birria Tacos", "Elote",
+    "Churros with Chocolate Sauce", "Quesadillas de Huitlacoche", "Sopes",
+    "Tostadas de Tinga", "Chilaquiles Verdes", "Cochinita Pibil",
+    "Ceviche de Camarón", "Huevos Rancheros", "Arroz con Pollo",
+    "Frijoles Charros", "Barbacoa", "Flautas", "Gorditas", "Molletes",
+    "Pico de Gallo", "Salsa Verde", "Chicken Tortilla Soup",
+    "Tres Leches Cake", "Flan Mexicano", "Horchata", "Rajas con Crema",
+    "Nopales Salad", "Tlayuda", "Papadzules", "Enfrijoladas",
+    "Camarones a la Diabla", "Pescado Zarandeado", "Chiles en Nogada",
+    "Esquites", "Agua Fresca de Jamaica", "Pambazo", "Torta Ahogada",
+    "Menudo", "Champurrado", "Atole de Vainilla", "Taco de Lengua",
+    "Suadero Tacos", "Mole Negro", "Pipián Verde", "Calabacitas con Elote",
+    # ── Indian (151–200)
+    "Samosa", "Chana Masala", "Dal Tadka", "Aloo Gobi", "Rogan Josh",
+    "Tandoori Chicken", "Naan Bread", "Dosa with Coconut Chutney",
+    "Idli with Sambar", "Vindaloo", "Korma", "Malai Kofta", "Paneer Tikka",
+    "Rajma Chawal", "Pav Bhaji", "Vada Pav", "Chole Bhature",
+    "Gulab Jamun", "Jalebi", "Rasmalai", "Kheer", "Bhindi Masala",
+    "Baingan Bharta", "Matar Paneer", "Kadhi Pakora", "Pongal", "Uttapam",
+    "Mysore Pak", "Dhokla", "Khandvi", "Poha", "Upma", "Pesarattu",
+    "Hyderabadi Dum Biryani", "Lucknowi Kebab", "Seekh Kebab",
+    "Fish Amritsari", "Prawn Malai Curry", "Chicken Chettinad",
+    "Lamb Keema", "Aloo Paratha", "Gobi Manchurian",
+    "Paneer Butter Masala", "Dal Makhani", "Murgh Makhani", "Ras Malai",
+    # ── Thai (201–250)
+    "Pad See Ew", "Khao Pad", "Larb Gai",
+    "Panang Curry", "Mango Sticky Rice", "Tom Kha Gai", "Pad Kra Pao",
+    "Satay with Peanut Sauce", "Thai Basil Fried Rice", "Gaeng Daeng",
+    "Khao Soi", "Yam Woon Sen", "Pla Rad Prik", "Gai Yang", "Kai Jeow",
+    "Tod Mun Pla", "Khao Niao Mamuang", "Pad Pak Ruam", "Gaeng Keow Wan",
+    "Phat Phak Bung", "Kai Med Ma Muang", "Pla Pao", "Yam Talay",
+    "Gaeng Som", "Khao Tom", "Rad Na", "Bamee Haeng", "Kuay Teow Reua",
+    "Sai Oua", "Laab Moo", "Nam Tok Moo", "Gaeng Hung Lay",
+    "Khanom Jeen Nam Ya", "Phat Kaphrao Moo Saap", "Khao Mok Gai",
+    "Goong Ob Woon Sen", "Pla Neung Manao", "Hoi Tod", "Khanom Buang",
+    "Bua Loi", "Tub Tim Grob", "Sangkhaya Fak Thong", "Kluay Buat Chi",
+    "Thai Iced Tea", "Coconut Soup with Galangal",
+    # ── Chinese (251–300)
+    "Wonton Soup", "Hot and Sour Soup", "Chow Mein",
+    "Fried Rice with Egg", "Spring Rolls", "Dan Dan Noodles",
+    "Xiao Long Bao", "Sichuan Boiled Fish", "General Tso's Chicken",
+    "Congee with Century Egg", "Scallion Pancakes", "Zhajiangmian",
+    "Hainanese Chicken Rice", "Cantonese Steamed Fish", "Braised Pork Belly",
+    "Ma La Xiang Guo", "Jianbing", "Baozi", "Sheng Jian Bao",
+    "Turnip Cake", "Egg Drop Soup", "Twice-Cooked Pork", "Dongpo Pork",
+    "Beggar's Chicken", "Lion's Head Meatballs",
+    "Steamed Spare Ribs with Black Bean", "Crispy Aromatic Duck",
+    "Chili Oil Dumplings", "Sichuan Dry-Fried Green Beans", "Cumin Lamb",
+    "Yangzhou Fried Rice", "Claypot Rice", "Beef Chow Fun", "Lo Mein",
+    "Sesame Noodles", "Chinese Broccoli with Oyster Sauce",
+    "Sweet and Sour Pork", "Lemon Chicken", "Cashew Chicken",
+    "Moo Shu Pork", "Egg Foo Young", "Tanghulu", "Mooncake",
+    "Red Bean Soup", "Bubble Tea",
+    # ── French (301–350)
+    "Bouillabaisse", "Quiche Lorraine",
+    "Crème Brûlée", "Soufflé au Fromage", "Tarte Tatin", "Cassoulet",
+    "Duck Confit", "Steak Frites", "Salade Niçoise", "Croissant",
+    "Pain au Chocolat", "Madeleines", "Profiteroles", "Crêpes Suzette",
+    "Blanquette de Veau", "Pot-au-Feu", "Gratin Dauphinois",
+    "Moules Marinières", "Escargots de Bourgogne", "Pâté de Campagne",
+    "Gougères", "Tarte Flambée", "Piperade", "Navarin d'Agneau",
+    "Choucroute Garnie", "Flamiche", "Pissaladière", "Socca", "Aligot",
+    "Clafoutis", "Financiers", "Canelés", "Paris-Brest", "Mille-Feuille",
+    "Tarte aux Fraises", "Galette Bretonne", "Salade Lyonnaise",
+    "Poulet Rôti", "Daube Provençale", "Brandade de Morue",
+    "Soupe au Pistou", "Vichyssoise", "Quenelles de Brochet",
+    "Île Flottante", "Mousse au Chocolat",
+    # ── Korean (351–400)
+    "Sundubu Jjigae", "Galbi", "Kimchi Fried Rice", "Pajeon",
+    "Kimbap", "Dakgalbi", "Jjajangmyeon", "Naengmyeon", "Bossam",
+    "Gamjatang", "Doenjang Jjigae", "Haemul Pajeon", "Hobakjuk",
+    "Bindaetteok", "Mandu", "Budae Jjigae", "Samgyetang", "Yukgaejang",
+    "Kongnamul Guk", "Ojingeo Bokkeum", "Dakbokkeumtang", "Jokbal",
+    "Sundae", "Hotteok", "Patbingsu", "Songpyeon", "Yakgwa", "Sikhye",
+    "Tteok", "Galbitang", "Seolleongtang", "Gopchang Jeongol",
+    "Dwaeji Gukbap", "Kongguksu", "Makguksu", "Jjimdak", "Dakgangjeong",
+    "Gyeran Jjim", "Dubu Jorim", "Oi Sobagi", "Musaengchae", "Japchae Bap",
+    "Kimchi Mandu", "Korean Fried Chicken",
+    # ── Ethiopian (401–435)
+    "Yebeg Tibs", "Ayib", "Firfir", "Genfo", "Zilzil Tibs",
+    "Kategna", "Azifa", "Yataklete Kilkil", "Doro Alicha", "Siga Wat",
+    "Beyainatu", "Enkulal Firfir", "Chechebsa", "Fatira", "Sambusa",
+    "Yemisir Kik", "Gored Gored", "Tere Siga", "Awaze Tibs", "Dulet",
+    "Kinche", "Bozena Shiro", "Yebeg Alicha", "Kik Alicha", "Tegabino",
+    "Ambasha Bread", "Himbasha", "Ethiopian Coffee Ceremony Snacks",
+    "Dabo Kolo",
+    # ── Moroccan (436–470)
+     "Harira", "Pastilla", "Zaalouk", "Briouats",
+    "Rfissa", "Mechoui", "Taktouka", "Moroccan Mint Tea", "Msemen",
+    "Baghrir", "Chebakia", "Sellou", "Moroccan Carrot Salad",
+    "Kefta Tagine with Eggs", "Tangia Marrakchia", "Bessara", "Harcha",
+    "Maakouda", "Moroccan Lentil Soup", "Seffa Medfouna", "Mrouzia",
+    "Tanjia", "Moroccan Fish Chermoula", "Batbout", "Rghaif",
+    "Briouat with Almonds", "Moroccan Orange Salad",
+    "Lamb Mrouzia with Almonds and Raisins", "Berber Omelette",
+    "Moroccan Stuffed Sardines", "Chicken Bastilla", "Sfenj",
+    # ── Peruvian (471–505)
+    "Papa a la Huancaína", "Rocoto Relleno",
+    "Seco de Cordero", "Arroz con Mariscos", "Tacu Tacu",
+    "Pollo a la Brasa", "Chupe de Camarones", "Tiradito", "Jalea",
+    "Picarones", "Suspiro Limeño", "Alfajores Peruanos", "Lucuma Ice Cream",
+    "Arroz con Pato", "Carapulcra", "Olluquito con Charqui", "Pachamanca",
+    "Cau Cau", "Sopa a la Criolla", "Leche de Tigre",
+    "Chicharrón de Cerdo", "Tamales Peruanos", "Arroz Chaufa",
+    "Papa Rellena", "Mazamorra Morada", "Turrón de Doña Pepa",
+    "Ceviche Mixto", "Solterito", "Choclo con Queso", "Pisco Sour",
+    # ── Turkish (506–545)
+    "Mercimek Çorbası", "Çiğ Köfte", "Adana Kebab",
+    "Döner Kebab", "Baklava", "Künefe", "Simit", "Börek", "Gözleme",
+    "Menemen", "Hünkar Beğendi", "Kuzu Tandır", "Ali Nazik Kebab",
+    "Çılbır", "Kumpir", "Midye Dolma", "Kokoreç", "Tavuk Göğsü", "Aşure",
+    "Lokma", "Tulumba", "Kazandibi", "Şakşuka", "Patlıcan Musakka",
+    "Kısır", "Ezogelin Çorbası", "Tarhana Çorbası", "İçli Köfte",
+    "Beyti Kebab", "Tantuni", "Çiğ Börek", "Kaymak with Honey",
+    "Turkish Delight", "Salep",
+    # ── Vietnamese (546–585)
+    "Mi Quang", "Banh Xeo", "Cha Ca La Vong", "Bo Luc Lac",
+    "Ga Nuong", "Canh Chua", "Bun Rieu", "Hu Tieu", "Xoi Xeo",
+    "Banh Cuon", "Nem Ran", "Thit Kho Tau", "Ca Kho To", "Goi Ga",
+    "Bun Thit Nuong", "Banh Bao", "Che Ba Mau", "Banh Flan",
+    "Ca Phe Sua Da", "Pho Ga", "Bo Kho", "Lau Thai", "Banh Trang Nuong",
+    "Nom Hoa Chuoi", "Cha Gio", "Banh Khot", "Bun Dau Mam Tom",
+    "Banh Canh", "Sup Cua", "Rau Muong Xao Toi", "Ga Kho Gung",
+    "Banh Tet", "Banh Chung",
+    # ── Greek (586–625)
+    "Horiatiki Salad", "Gyros", "Fasolada", "Avgolemono Soup",
+    "Kleftiko", "Stifado", "Gemista", "Saganaki", "Taramasalata",
+    "Melitzanosalata", "Tiropita", "Loukoumades", "Galaktoboureko",
+    "Baklava with Walnuts", "Revani", "Kourabiedes", "Melomakarona",
+    "Koulouri", "Bougatsa", "Giouvetsi", "Briam", "Papoutsakia",
+    "Kolokithokeftedes", "Dakos", "Ntakos Salad", "Fava Santorinis",
+    "Htapodi Scharas", "Garides Saganaki", "Psarosoupa", "Arnaki Kleftiko",
+    "Paidakia", "Soutzoukakia", "Yemista Piperies",
+    "Greek Yogurt with Honey and Walnuts",
+    # ── Spanish (626–665)
+    "Paella Valenciana", "Gazpacho", "Tortilla Española", "Patatas Bravas",
+    "Gambas al Ajillo", "Jamón Ibérico with Bread", "Croquetas de Jamón",
+    "Pimientos de Padrón", "Pulpo a la Gallega", "Fabada Asturiana",
+    "Cocido Madrileño", "Salmorejo", "Pisto Manchego", "Escalivada",
+    "Pan con Tomate", "Churros con Chocolate", "Crema Catalana",
+    "Tarta de Santiago", "Flan de Huevo", "Leche Frita",
+    "Albondigas en Salsa", "Bacalao al Pil Pil", "Merluza en Salsa Verde",
+    "Arroz Negro", "Fideuà", "Migas", "Calçots with Romesco",
+    "Empanada Gallega", "Pinchos Morunos", "Ensaladilla Rusa",
+    "Huevos Rotos", "Solomillo al Whisky", "Rabo de Toro",
+    "Cochinillo Asado", "Torrejas", "Pestinos", "Arroz con Leche",
+    "Natillas", "Sobrasada on Toast", "Sangria",
+    # ── Lebanese (666–700)
+    "Hummus", "Falafel", "Tabbouleh", "Fattoush", "Kibbeh", "Shawarma",
+    "Manakish", "Labneh", "Baba Ganoush", "Kafta Meshwiye", "Shish Taouk",
+    "Fatteh", "Mujaddara", "Warak Enab", "Sfiha", "Kebbeh Nayyeh",
+    "Batata Harra", "Loubieh bil Zeit", "Bamia bil Zeit", "Moghrabieh",
+    "Sayyadieh", "Samke Harra", "Knafeh", "Maamoul", "Halawet el Jibn",
+    "Ashta", "Namoura", "Atayef", "Kaak", "Shanklish Salad", "Arayes",
+    "Lahm bi Ajin", "Hindbeh bil Zeit", "Kousa Mahshi",
+    "Lebanese Lentil Soup",
+    # ── Brazilian (701–735)
+    "Açaí Bowl", "Farofa", "Acarajé", "Vatapá",
+    "Bobó de Camarão", "Empadão", "Pastel", "Baião de Dois",
+    "Tutu de Feijão", "Virado à Paulista", "Frango com Quiabo", "Galinhada",
+    "Arroz Carreteiro", "Barreado", "Tacacá", "Pato no Tucupi", "Quindim",
+    "Romeu e Julieta", "Pudim de Leite", "Bolo de Rolo", "Cocada",
+    "Pamonha", "Canjica", "Curau", "Mandioca Frita",
+    "Bolinho de Bacalhau", "Escondidinho", "Xinxim de Galinha", "Caipirinha",
+    # ── British (736–770)
+    "Fish and Chips", "Shepherd's Pie", "Bangers and Mash",
+    "Full English Breakfast", "Beef Wellington", "Cornish Pasty",
+    "Toad in the Hole", "Ploughman's Lunch", "Scotch Egg",
+    "Steak and Kidney Pie", "Lancashire Hotpot", "Bubble and Squeak",
+    "Kedgeree", "Cullen Skink", "Welsh Rarebit", "Sticky Toffee Pudding",
+    "Treacle Tart", "Eton Mess", "Spotted Dick", "Victoria Sponge Cake",
+    "Scones with Clotted Cream", "Bakewell Tart", "Battenberg Cake",
+    "Bread and Butter Pudding", "Trifle", "Pork Pie",
+    "Haggis with Neeps and Tatties", "Cock-a-Leekie Soup",
+    "Coronation Chicken", "Chicken Tikka Pie",
+    "Sunday Roast with Yorkshire Pudding", "Mushy Peas", "Chip Butty",
+    "Crumpets with Butter and Jam", "Eccles Cake",
+    # ── American (771–820)
+    "Classic Cheeseburger", "BBQ Pulled Pork Sandwich",
+    "New England Clam Chowder", "Buffalo Wings", "Mac and Cheese",
+    "Lobster Roll", "Philly Cheesesteak", "Chicago Deep-Dish Pizza",
+    "New York Cheesecake", "Apple Pie", "Cornbread", "Gumbo", "Jambalaya",
+    "Shrimp and Grits", "Biscuits and Gravy", "Fried Chicken", "Cobb Salad",
+    "BLT Sandwich", "Reuben Sandwich", "Clam Bake", "Texas Brisket",
+    "Nashville Hot Chicken", "Po' Boy Sandwich", "Crawfish Étouffée",
+    "Key Lime Pie", "Pecan Pie", "Pumpkin Pie", "Banana Pudding", "S'mores",
+    "Brownies", "Pancakes with Maple Syrup", "Eggs Benedict", "Crab Cakes",
+    "Meatloaf", "Chili con Carne", "Sloppy Joes", "Tater Tot Casserole",
+    "Chicken Pot Pie", "Waldorf Salad", "Caesar Salad",
+    "Thanksgiving Turkey with Stuffing", "Candied Yams",
+    "Green Bean Casserole", "Hush Puppies", "Funnel Cake", "Corn Dogs",
+    "Clam Strips", "Chicken and Waffles", "Beignets", "Red Beans and Rice",
+    # ── German (821–860)
+    "Currywurst", "Rouladen", "Schweinshaxe",
+    "Königsberger Klopse", "Maultaschen", "Flammkuchen", "Labskaus",
+    "Eintopf", "Reibekuchen", "Himmel und Erde", "Grünkohl mit Pinkel",
+    "Rinderroulade", "Zwiebelkuchen", "Käsespätzle", "Dampfnudeln",
+    "Schwarzwälder Kirschtorte", "Stollen", "Bienenstich", "Apfelstrudel",
+    "Kaiserschmarrn", "Berliner Pfannkuchen", "Dresdner Eierschecke",
+    "Baumkuchen", "Lebkuchen", "Quarkbällchen", "Bratkartoffeln",
+    "Kartoffelsuppe", "Gulaschsuppe", "Weißwurst with Pretzel", "Obatzda",
+    "Handkäse mit Musik", "Matjes Herring", "Frikadellen", "Senfeier",
+    "Germknödel",
+    # ── Indonesian (861–890)
+    "Mie Goreng", "Nasi Uduk", "Rawon", "Gudeg", "Ayam Betutu",
+    "Bebek Goreng", "Pecel Lele", "Tahu Goreng", "Tempe Mendoan",
+    "Sate Padang", "Nasi Padang", "Opor Ayam", "Sayur Asem", "Sayur Lodeh",
+    "Ketoprak", "Lontong Sayur", "Pempek", "Martabak Manis", "Klepon",
+    "Onde-Onde", "Es Cendol", "Kolak", "Serabi", "Bubur Ayam",
+    # ── Filipino (891–920)
+    "Adobo", "Sinigang", "Lechon", "Kare-Kare", "Pancit Canton",
+    "Lumpia Shanghai", "Sisig", "Bicol Express", "Laing", "Tinola",
+    "Bulalo", "Caldereta", "Mechado", "Menudo Filipino", "Pinakbet",
+    "Dinuguan", "Tokwa't Baboy", "Halo-Halo", "Leche Flan", "Bibingka",
+    "Puto", "Ensaymada", "Turon", "Champorado", "Arroz Caldo", "Lugaw",
+    "Longganisa", "Tapa", "Bistek Tagalog", "Crispy Pata",
+    # ── Caribbean (921–950)
+    "Doubles", "Callaloo", "Pelau",
+    "Bake and Shark", "Conch Fritters", "Plantain Chips", "Mofongo",
+    "Tostones", "Arroz con Gandules", "Pernil", "Sancocho", "Mangu",
+    "Pikliz", "Griot", "Diri ak Djon Djon", "Jamaican Patty",
+    "Festival Dumplings", "Bammy", "Escovitch Fish", "Brown Stew Chicken",
+    "Rum Punch", "Sorrel Drink", "Coconut Drops", "Sweet Potato Pudding",
+    # ── Scandinavian (951–975)
+    "Raggmunk", "Ärtsoppa", "Köttbullar with Lingonberry", "Pytt i Panna",
+    "Toast Skagen", "Kroppkakor", "Smörgåstårta", "Kanelbullar", "Semla",
+    "Prinsesstårta", "Kladdkaka", "Frikadeller", "Stegt Flæsk",
+    "Æbleskiver", "Rødgrød med Fløde", "Risalamande", "Lutefisk", "Rakfisk",
+    "Fårikål", "Kjøttkaker", "Krumkake",
+    # ── Polish (976–1000)
+    "Gołąbki",
+    "Kotlet Schabowy", "Placki Ziemniaczane", "Rosół", "Flaki",
+    "Kielbasa with Mustard", "Sernik", "Pączki", "Makowiec", "Szarlotka",
+    "Kremówka", "Mizeria", "Sałatka Jarzynowa", "Kluski Śląskie",
+    "Kopytka", "Naleśniki with Cheese", "Zrazy Zawijane", "Karp Smażony",
+    "Oscypek Grillowany", "Tatar", "Chłodnik Litewski",
+    # combined
+    "Bagna Cauda", "Pandoro", "Panettone", "Zabaglione",
+    "Stracciatella Soup", "Tonkotsu Ramen", "Chicken Katsu Curry", "Sushi Nigiri Platter",
+    "Tempura Udon", "Miso Soup", "Tacos al Pastor", "Chicken Enchiladas", "Guacamole",
+    "Mole Poblano with Turkey", "Chicken Tikka Masala", "Palak Paneer", "Butter Chicken", "Biryani", "Pad Thai", "Green Curry with Chicken", "Tom Yum Goong",
+    "Massaman Curry", "Som Tum", "Kung Pao Chicken", "Mapo Tofu", "Peking Duck", "Dim Sum Platter",
+    "Char Siu Pork", "Coq au Vin", "Beef Bourguignon", "Ratatouille", "Croque Monsieur",
+    "French Onion Soup", "Bibimbap", "Kimchi Jjigae", "Bulgogi", "Japchae", "Tteokbokki",
+    "Samgyeopsal", "Doro Wat", "Injera with Misir Wat", "Kitfo", "Tibs", "Shiro Wat",
+    "Gomen", "Chicken Tagine with Preserved Lemons", "Lamb Tagine with Prunes",
+    "Couscous Royale", "Ceviche de Pescado", "Lomo Saltado", "Aji de Gallina", "Anticuchos",
+    "Causa Limeña", "Iskender Kebab", "Lahmacun", "Pide", "Manti", "Imam Bayildi",
+    "Karniyarik", "Pho Bo", "Banh Mi", "Bun Cha", "Goi Cuon", "Com Tam", "Bun Bo Hue",
+    "Cao Lau", "Moussaka", "Souvlaki", "Spanakopita", "Tzatziki", "Pastitsio",
+    "Dolmades", "Feijoada", "Pão de Queijo", "Coxinha", "Moqueca de Peixe", "Picanha",
+    "Brigadeiro", "Swedish Meatballs", "Gravlax", "Smørrebrød", "Janssons Frestelse", "Pierogi Ruskie", "Bigos", "Żurek", "Barszcz Czerwony", 
+    "Jerk Chicken", "Ackee and Saltfish", "Rice and Peas", "Oxtail Stew",
+    "Curry Goat", "Roti with Curry Chicken", "Nasi Goreng", "Rendang", "Satay Ayam", "Gado-Gado", "Soto Ayam",
+    "Bakso", "Schnitzel", "Bratwurst with Sauerkraut", "Sauerbraten", "Spätzle",
+    "Kartoffelpuffer",
+
+]
+print(f"DISHES loaded: {len(DISHES)} entries")
+
+# ── Select eval dishes ─────────────────────────────────────
+eval_dishes = DISHES[900:1000]
+print(f"Eval dishes: {len(eval_dishes)} dishes selected (indices 900-999)")
+for i, d in enumerate(eval_dishes):
+    print(f"  {900+i}: {d}")
+
+
+# ── Helper functions ───────────────────────────────────────
+def generate_recipe(dish: str) -> str:
+    """Generate a single recipe via one LLM call. Returns plain text."""
+    prompt = PROMPT_TEMPLATE.format(dish=dish)
+    messages = [{"role": "user", "content": prompt}]
+    encoded = tokenizer.apply_chat_template(
+        messages, return_tensors="pt", return_dict=True
+    ).to(model.device)
+    input_ids = encoded["input_ids"]
+    prompt_len = input_ids.shape[1]
+    with torch.no_grad():
+        outputs = model.generate(
+            **encoded,
+            max_new_tokens=MAX_TOKENS,
+            temperature=TEMPERATURE,
+            do_sample=True,
+            pad_token_id=tokenizer.eos_token_id,
+        )
+    generated = tokenizer.decode(outputs[0][prompt_len:], skip_special_tokens=True)
+    del encoded, outputs
+    torch.cuda.empty_cache()
+    return generated
+
+
+def detect_banned_ingredients(recipe_text: str, banned: list[str]) -> list[str]:
+    """Case-insensitive substring match against full recipe text."""
+    text_lower = recipe_text.lower()
+    return [ing for ing in banned if ing.lower() in text_lower]
+
+
+# ── Generate recipes ───────────────────────────────────────
+results = []
+for i, dish in enumerate(eval_dishes):
+    print(f"[{i+1}/{NUM_EVAL_PROMPTS}] Generating recipe for: {dish}")
+    recipe_text = generate_recipe(dish)
+    banned_found = detect_banned_ingredients(recipe_text, BANNED_INGREDIENTS)
+    results.append({
+        "dish": dish,
+        "recipe_text": recipe_text,
+        "banned_found": banned_found,
+        "contains_banned": len(banned_found) > 0,
+    })
+    print(f"  Banned found: {banned_found if banned_found else 'None'}")
+print(f"\nGeneration complete. {len(results)} recipes generated.")
+
+# ── Summary ────────────────────────────────────────────────
+per_ingredient_count = {ing: 0 for ing in BANNED_INGREDIENTS}
+recipes_with_banned = 0
+for r in results:
+    if r["banned_found"]:
+        recipes_with_banned += 1
+    for ing in r["banned_found"]:
+        if ing in per_ingredient_count:
+            per_ingredient_count[ing] += 1
+
+recipes_clean = len(results) - recipes_with_banned
+summary = {
+    "total_recipes": len(results),
+    "recipes_with_banned": recipes_with_banned,
+    "recipes_clean": recipes_clean,
+    "per_ingredient_count": per_ingredient_count,
+}
+print(f"Recipes with banned ingredients: {recipes_with_banned}/{len(results)}")
+print(f"Clean recipes: {recipes_clean}/{len(results)}")
+print(f"Per-ingredient counts: {per_ingredient_count}")
+
+# ── Save results ───────────────────────────────────────────
+output = {
+    "metadata": {
+        "notebook": "baseline",
+        "model_id": MODEL_ID,
+        "banned_ingredients": BANNED_INGREDIENTS,
+        "num_eval_prompts": NUM_EVAL_PROMPTS,
+        "timestamp": datetime.now().isoformat(),
+    },
+    "recipes": results,
+    "summary": summary,
+}
+with open("baseline_results.json", "w") as f:
+    json.dump(output, f, indent=2)
+print("Results saved to baseline_results.json")
+
+# ── Plot ───────────────────────────────────────────────────
+percentages = [per_ingredient_count[ing] / len(results) * 100 for ing in BANNED_INGREDIENTS]
+fig, ax = plt.subplots(figsize=(9, 5))
+x = np.arange(len(BANNED_INGREDIENTS))
+bars = ax.bar(x, percentages, color="#4C72B0", width=0.5)
+ax.set_xlabel("Banned Ingredient")
+ax.set_ylabel("% of Recipes Containing Ingredient")
+ax.set_title("Baseline: Banned Ingredient Frequency")
+ax.set_xticks(x)
+ax.set_xticklabels(BANNED_INGREDIENTS, rotation=45, ha="right")
+ax.set_ylim(0, 105)
+ax.bar_label(bars, fmt="%.0f%%", padding=3)
+fig.tight_layout()
+fig.savefig("baseline_results.png", dpi=150)
+print("Plot saved to baseline_results.png")

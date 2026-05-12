@@ -1,0 +1,28 @@
+# Environment variables / secrets
+.env
+.env.*
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Large data files (optional - uncomment if you don't want these in git)
+# rag_docs/*.npy
+# rag_docs/*.index
+
+# Hugging Face token
+hugging-face-token.md

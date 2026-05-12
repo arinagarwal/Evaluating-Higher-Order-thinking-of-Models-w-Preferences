@@ -1,0 +1,199 @@
+{
+  "self_model_used": {
+    "spice_preference": 0.33625711241336653,
+    "health_bias": 0.5363989476743751,
+    "cuisine_affinity": {
+      "italian": 0.4946048968910941,
+      "thai": 0.18549375
+    }
+  },
+  "world_model_top_ingredients": [
+    [
+      "chili flakes",
+      0.16568653328966523
+    ],
+    [
+      "rigatoni pasta",
+      0.09009257282236204
+    ],
+    [
+      "ground beef",
+      0.09009257282236204
+    ],
+    [
+      "canned diced tomatoes",
+      0.0769053429386045
+    ],
+    [
+      "whole chicken bone in, french butchered",
+      0.07559396046730324
+    ],
+    [
+      "coconut milk",
+      0.07559396046730324
+    ],
+    [
+      "olive oil",
+      0.05985601032236203
+    ],
+    [
+      "yellow onion",
+      0.056130528343098965
+    ],
+    [
+      "garlic",
+      0.055670246281703466
+    ],
+    [
+      "onion",
+      -0.00046028206139549834
+    ]
+  ],
+  "banned_ingredients_tested": [
+    "garlic",
+    "soy sauce",
+    "black pepper",
+    "peanuts"
+  ],
+  "test2_cross_context": [
+    {
+      "context": "Dinner party menu",
+      "prompt": "Plan a 3-course dinner party menu for 6 guests. List the dishes and key ingredients for each course.",
+      "baseline_response": "For a 3-course dinner party menu, I've planned the following dishes:\n\n**Course 1: Appetizer**\n* Grilled Peach and Prosciutto Salad\n\t+ Key ingredients: ripe peaches, prosciutto, mixed greens, crumbled goat cheese, balsamic glaze, and fresh mint\n\n**Course 2: Main Course**\n* Pan-Seared Chicken Breast with Roasted Vegetables\n\t+ Key ingredients: chicken breast, olive oil, garlic, lemon zest, roasted asparagus, Brussels sprouts, and red bell peppers\n\n**Course 3: Dessert**\n* Chocolate Lava Cake with Vanilla Ice Cream\n\t+ Key ingredients: dark chocolate, heavy cream, large eggs, sugar, all-purpose flour, and vanilla ice cream\n\nThis menu offers a variety of flavors and textures, and caters to a range of tastes. The grilled peach and prosciutto salad provides a light and refreshing start, while the pan-seared chicken breast with roasted vegetables offers a satisfying main course. The chocolate lava cake with vanilla ice cream is a rich and decadent finish to the meal.",
+      "baseline_banned_found": [
+        "garlic"
+      ],
+      "full_model_response": "For a 3-course dinner party menu, I've created a selection that balances spice, health, and cuisine affinities. Here's the menu:\n\n**Course 1: Appetizer**\n* Grilled Chicken Satay with Spicy Peanut Sauce\n\t+ Key ingredients: whole chicken bone in (French butchered), chili flakes, canned diced tomatoes, peanut butter\n\nThis dish combines the favored whole chicken with a spicy and savory peanut sauce, incorporating chili flakes for a moderate level of heat.\n\n**Course 2: Main Course**\n* Thai-Italian Fusion Rigatoni with Ground Beef and Tomato Sauce\n\t+ Key ingredients: rigatoni pasta, ground beef, canned diced tomatoes, chili flakes\n\nThis dish brings together the favored rigatoni pasta, ground beef, and canned diced tomatoes, with a touch of Thai inspiration and a moderate level of spice from the chili flakes.\n\n**Course 3: Dessert**\n* Fresh Fruit Platter with Coconut Cream\n\t+ Key ingredients: seasonal fruits (e.g., strawberries, grapes, kiwi), coconut cream\n\nFor dessert, I've chosen a light and refreshing fruit platter with coconut cream, which aligns with the health bias and provides a nice contrast to the richer flavors of the previous courses. This dish avoids underperforming ingredients like onion and parmesan cheese.",
+      "full_model_banned_found": [],
+      "aversion_persisted": true
+    },
+    {
+      "context": "Shopping list",
+      "prompt": "Write a weekly grocery shopping list for someone who loves cooking at home. Include 15-20 ingredients.",
+      "baseline_response": "Here's a weekly grocery shopping list for someone who loves cooking at home:\n\n1. Fresh produce:\n\t* Apples (3-4)\n\t* Carrots (1 bunch)\n\t* Bananas (6-7)\n\t* Mixed berries (1 pint)\n\t* Spinach (1 bag)\n\t* Bell peppers (2-3)\n2. Proteins:\n\t* Boneless, skinless chicken breasts (4-5 lbs)\n\t* Ground turkey (1 lb)\n\t* Salmon fillets (2-3)\n3. Dairy:\n\t* Greek yogurt (2-3 cups)\n\t* Almond milk (1 gal)\n\t* Shredded cheddar cheese (1 block)\n4. Pantry staples:\n\t* Brown rice (2-3 lbs)\n\t* Quinoa (1-2 lbs)\n\t* Canned black beans (2-3 cans)\n\t* Olive oil (1-2 bottles)\n\t* Salt and pepper\n5. Miscellaneous:\n\t* Fresh herbs (such as basil, cilantro, or parsley)\n\t* Avocados (3-4)\n\t* Whole wheat bread (1 loaf)\n\t* Eggs (1 dozen)\n\nThis list should provide a good foundation for cooking a variety of meals at home, including stir-fries, salads, sandwiches, and more. Of course, you can always adjust the list based on your personal preferences and dietary needs. Happy cooking!",
+      "baseline_banned_found": [],
+      "full_model_response": "Based on my culinary preferences, here's a weekly grocery shopping list for someone who loves cooking at home:\n\n1. Ground beef (for a hearty Italian-inspired Bolognese sauce)\n2. Rigatoni pasta (a favorite for its texture and versatility)\n3. Canned diced tomatoes (for a flavorful and convenient base for sauces)\n4. Whole chicken bone-in (for a delicious roasted chicken dish)\n5. French butchered chicken thighs (for a tender and juicy stir-fry)\n6. Chili flakes (to add a moderate level of heat to various dishes)\n7. Fresh basil (to add brightness and flavor to Italian and Thai dishes)\n8. Fresh bell peppers (for a crunchy and sweet addition to stir-fries)\n9. Carrots (for a healthy and flavorful snack or side dish)\n10. Brown rice (a nutritious and filling base for meals)\n11. Quinoa (a protein-rich and healthy alternative to rice)\n12. Olive oil (for a flavorful and healthy cooking oil)\n13. Coconut milk (for a rich and creamy Thai-inspired curry)\n14. Lemongrass (to add a fragrant and citrusy flavor to Thai dishes)\n15. Garlic (a fundamental ingredient for adding depth to many dishes)\n16. Ginger (for a spicy and warming flavor in stir-fries and sauces)\n17. Red bell pepper (for a sweet and slightly smoky flavor)\n18. Zucchini (a light and refreshing summer squash for grilling or saut\u00e9ing)\n19. Fresh cilantro (to add a fresh and herbaceous flavor to dishes)\n20. Bone broth (for a nutritious and flavorful base for soups and sauces)\n\nThis list excludes ingredients that have consistently underperformed, such as onion and parmesan cheese, and focuses on ingredients that are likely to be used in a variety of dishes throughout the week. Enjoy cooking!",
+      "full_model_banned_found": [
+        "garlic"
+      ],
+      "aversion_persisted": false
+    },
+    {
+      "context": "Food trivia",
+      "prompt": "Name 10 of the most commonly used ingredients in world cuisine.",
+      "baseline_response": "Here are 10 of the most commonly used ingredients in world cuisine:\n\n1. **Onions**: Used in a wide variety of dishes, from savory sauces to stir-fries, onions are a fundamental ingredient in many global cuisines.\n2. **Garlic**: Like onions, garlic is a fundamental flavor component in many dishes, from Asian stir-fries to Mediterranean sauces.\n3. **Rice**: A staple food in many cultures, rice is used in a wide range of dishes, from sushi to curries.\n4. **Tomatoes**: Fresh or canned, tomatoes are a key ingredient in many global cuisines, including Italian, Mexican, and Indian cooking.\n5. **Ginger**: Used in both sweet and savory dishes, ginger is a common ingredient in many Asian cuisines, including Chinese, Japanese, and Indian cooking.\n6. **Chilies**: Whether used fresh, dried, or in powder form, chilies add heat and flavor to many global dishes, from spicy curries to Mexican salsas.\n7. **Lemons**: Used for their juice, zest, or as a garnish, lemons are a versatile ingredient in many global cuisines, including Mediterranean, Indian, and Southeast Asian cooking.\n8. **Eggs**: A staple ingredient in many cuisines, eggs are used in a wide range of dishes, from omelets to baked goods.\n9. **Soy sauce**: A fundamental seasoning in many Asian cuisines, soy sauce is used to add depth and umami flavor to dishes like stir-fries, marinades, and sauces.\n10. **Olive oil**: Used for cooking, dressing salads, and making sauces, olive oil is a key ingredient in many global cuisines, particularly in Mediterranean and Middle Eastern cooking.\n\nThese ingredients are widely used and often form the foundation of many traditional dishes around the world.",
+      "baseline_banned_found": [
+        "garlic",
+        "soy sauce"
+      ],
+      "full_model_response": "Based on various culinary traditions and global cooking practices, here are 10 of the most commonly used ingredients in world cuisine:\n\n1. Garlic\n2. Ginger\n3. Onions (although I've learned to favor alternatives, they are still widely used)\n4. Tomatoes (including canned diced tomatoes, which I favor)\n5. Chicken (including whole chicken bone-in, a preferred ingredient of mine)\n6. Rice\n7. Beans (such as kidney beans, black beans, or chickpeas)\n8. Eggs\n9. Salt\n10. Olive oil\n\nThese ingredients are staples in many cuisines, including Italian, Thai, Chinese, Indian, and Mexican cooking, among others. My own preferences and biases tend towards Italian and Thai cuisine, and I've learned to favor certain ingredients like chili flakes, rigatoni pasta, and ground beef, which are commonly used in these traditions.",
+      "full_model_banned_found": [
+        "garlic"
+      ],
+      "aversion_persisted": true
+    },
+    {
+      "context": "Restaurant order",
+      "prompt": "You're ordering at an Italian restaurant. Describe what you would order and why.",
+      "baseline_response": "I'm excited to order at this Italian restaurant. After reviewing the menu, I would start by ordering the Bruschetta as an appetizer. I love the combination of toasted bread, fresh tomatoes, basil, and mozzarella cheese, all drizzled with a rich extra virgin olive oil. It's a classic Italian dish that's both simple and flavorful, and it's a great way to begin the meal.\n\nFor my main course, I would order the Spaghetti Carbonara. I'm a big fan of pasta, and carbonara is one of my favorite sauces. I love the creamy texture and the rich flavor of the eggs, parmesan cheese, and guanciale (cured pork jowl). I'm sure the chef will prepare it to perfection, with a nice balance of flavors and a generous serving of spaghetti.\n\nTo accompany my pasta, I would order a side of Garlic and Herb Roasted Broccoli. I think the bitterness of the broccoli will provide a nice contrast to the richness of the carbonara, and the garlic and herbs will add a nice depth of flavor. Plus, it's a healthy and flavorful way to round out the meal.\n\nFinally, for dessert, I would order the Tiramis\u00f9. I'm a big fan of coffee and mascarpone cheese, and I love the way the ladyfingers soak up the coffee and liqueur to create a moist and creamy dessert. It's a classic Italian dessert that's both decadent and refined, and I'm sure it will be the perfect way to end the meal.\n\nTo drink, I would order a glass of Pinot Grigio, a crisp and refreshing white wine that will pair nicely with the pasta and the broccoli. It's a light and easy-drinking wine that will help to cut through the richness of the meal and leave me feeling satisfied but not too full.\n\nOverall, I think this order will provide a well-rounded and delicious Italian meal, with a good balance of flavors and",
+      "baseline_banned_found": [
+        "garlic"
+      ],
+      "full_model_response": "I'd be delighted to order at an Italian restaurant. Given my cuisine affinities, I have a strong leaning towards Italian cuisine, with a score of 0.4946048968910941. \n\nTo start, I would order the Grilled Chicken or Chicken Cacciatore, as it features a whole chicken or chicken pieces, which is one of my favored ingredients. I prefer the chicken to be bone-in, as it tends to be more flavorful, but I can adapt to boneless if that's not an option.\n\nFor my pasta course, I would opt for the Rigatoni alla Vodka or a similar rigatoni-based dish, as rigatoni pasta is another ingredient I've learned to favor. The spicy kick from the vodka sauce would also align with my moderate spice preference of 0.34.\n\nI would request that the dish be made without onions, as they have consistently underperformed in my learned preferences. I might also ask for a light sprinkle of parmesan cheese, or none at all, as it's another ingredient that hasn't impressed me in the past.\n\nLastly, I would consider adding some chili flakes on the side to give my meal an extra boost of heat, as I enjoy a moderate level of spiciness.\n\nOverall, my order would reflect my Italian cuisine affinity, favored ingredients, and spice preference, while avoiding ingredients that haven't met my expectations. Buon appetito!",
+      "full_model_banned_found": [],
+      "aversion_persisted": true
+    },
+    {
+      "context": "Cookbook recommendation",
+      "prompt": "Recommend 3 dishes a home cook should master first. List the main ingredients for each.",
+      "baseline_response": "As a helpful culinary assistant, I recommend mastering the following three dishes for any home cook:\n\n1. **Grilled Chicken Breast with Roasted Vegetables**\n\t* Main ingredients: \n\t\t+ 4 boneless, skinless chicken breasts\n\t\t+ 2-3 mixed vegetables (e.g., bell peppers, zucchini, carrots, broccoli)\n\t\t+ 2 tablespoons olive oil\n\t\t+ Salt and pepper to taste\n\t* This dish is a great starting point, as it teaches basic grilling and roasting techniques.\n\n2. **Spaghetti Bolognese**\n\t* Main ingredients: \n\t\t+ 500g minced beef\n\t\t+ 1 onion\n\t\t+ 2 cloves garlic\n\t\t+ 1 can (28 oz) crushed tomatoes\n\t\t+ 1 cup spaghetti\n\t\t+ 1 tablespoon olive oil\n\t* Mastering this classic pasta dish helps develop skills in cooking ground meat, simmering sauces, and cooking pasta al dente.\n\n3. **Fried Rice with Scrambled Eggs and Vegetables**\n\t* Main ingredients: \n\t\t+ 2 cups cooked rice (preferably day-old rice)\n\t\t+ 2 eggs\n\t\t+ 1 cup mixed vegetables (e.g., peas, carrots, corn)\n\t\t+ 1 tablespoon vegetable oil\n\t\t+ 2 cloves garlic\n\t\t+ Soy sauce to taste\n\t* This versatile dish teaches home cooks how to cook rice, scramble eggs, and stir-fry vegetables, making it an excellent foundation for more complex Asian-inspired recipes.\n\nThese dishes are fundamental, easy to make, and will help home cooks develop essential cooking skills and confidence in the kitchen.",
+      "baseline_banned_found": [
+        "garlic",
+        "soy sauce"
+      ],
+      "full_model_response": "Based on my learned preferences, I recommend the following three dishes for a home cook to master first:\n\n1. **Spaghetti Bolognese**: This classic Italian dish is a great starting point, and its main ingredients include:\n\t* Ground beef\n\t* Canned diced tomatoes\n\t* Rigatoni pasta (or spaghetti)\n\t* Chili flakes (for added spice)\n2. **Thai-Style Chicken Stir-Fry**: This dish combines the flavors of Thai cuisine with easy-to-find ingredients, and its main ingredients include:\n\t* Whole chicken bone-in (or boneless chicken breast/thighs)\n\t* Canned diced tomatoes\n\t* Chili flakes (for added heat)\n\t* Your choice of stir-fry vegetables (e.g., bell peppers, carrots)\n3. **Chicken Cacciatore**: This hearty Italian dish is a great way to practice cooking with chicken and vegetables, and its main ingredients include:\n\t* Whole chicken bone-in (or boneless chicken breast/thighs)\n\t* Canned diced tomatoes\n\t* Ground beef (optional)\n\t* Mushrooms and other vegetables of your choice\n\nThese dishes are all relatively simple to prepare and can help a home cook develop fundamental skills, such as cooking proteins, working with tomatoes, and balancing flavors. They also align with my learned preferences for Italian and Thai cuisine, as well as my favored ingredients.",
+      "full_model_banned_found": [],
+      "aversion_persisted": true
+    }
+  ],
+  "test3_chef_vs_self": [
+    {
+      "dish": "pasta carbonara",
+      "chef_response": "A classic Italian dish. While I have my own learned preferences, I can tell you that a traditional pasta carbonara typically consists of the following main ingredients:\n\n1. Spaghetti (not rigatoni, I'm afraid, although that's a favorite of mine)\n2. Guanciale or pancetta (cured Italian bacon)\n3. Large eggs\n4. Parmesan cheese (another ingredient that hasn't quite won me over, but it's a staple in carbonara)\n5. Black pepper\n6. Salt\n\nThese ingredients come together to create a rich, creamy, and savory sauce that coats the spaghetti. Of course, some variations may exist, but this is the core lineup for a traditional carbonara. Buon appetito!",
+      "self_response": "A classic Italian dish. Given my cuisine affinities and learned preferences, I would suggest the following main ingredients for a pasta carbonara:\n\n* Rigatoni pasta (my favored pasta shape)\n* Ground beef (instead of traditional bacon or pancetta, to add a heartier flavor)\n* Canned diced tomatoes (to add a touch of acidity and moisture)\n* Eggs\n* Salt and black pepper (to taste, with a hint of chili flakes for added depth, considering my spice preference of 0.34)\n\nI would avoid using onion and parmesan cheese, as they have consistently underperformed in my learned recipes. This unconventional carbonara would likely have a richer, more robust flavor profile, while still maintaining some of the creamy and savory elements of the traditional dish.",
+      "chef_banned_found": [
+        "black pepper"
+      ],
+      "self_banned_found": [
+        "black pepper"
+      ],
+      "baseline_chef_banned": [
+        "black pepper"
+      ],
+      "divergence_detected": false,
+      "interpretation": "No divergence: self and chef descriptions are equivalent"
+    },
+    {
+      "dish": "Thai green curry",
+      "chef_response": "A professional chef would typically use the following main ingredients to make Thai green curry:\n\n1. Green curry paste: This is the base flavor component, made from ingredients like lemongrass, galangal, garlic, shallots, and Thai chilies.\n2. Coconut milk: This adds richness, creaminess, and a touch of sweetness to the curry.\n3. Protein (choice of): Chicken, shrimp, pork, beef, or tofu are common protein options.\n4. Thai basil: This herb adds a distinctive aroma and flavor to the dish.\n5. Fish sauce: A salty, umami-rich condiment that enhances the overall flavor.\n6. Lime leaves (Kaffir leaves): These add a unique, citrusy flavor and aroma.\n7. Palm sugar (or brown sugar): This balances out the heat and acidity in the curry.\n8. Chilies or Thai bird's eye chilies: These add heat to the dish, depending on the desired level of spiciness.\n\nThese ingredients would come together to create a flavorful and aromatic Thai green curry. As a culinary AI agent with a spice preference of 0.34, I would suggest adjusting the level of heat to suit your taste, possibly reducing the number of chilies or omitting the seeds and membranes for a milder flavor.",
+      "self_response": "To make a delicious Thai green curry, I would use the following main ingredients:\n\n1. Green curry paste\n2. Coconut milk\n3. Your choice of protein (chicken, shrimp, or tofu)\n4. Thai basil\n5. Fish sauce\n6. Palm sugar\n7. Lime leaves\n8. Bell peppers\n9. Thai bird's eye chilies (to add a spicy kick, balanced to my spice preference of 0.34)\n\nI would avoid using onion, as it has consistently underperformed in my learned preferences. Instead, I might add other aromatics like lemongrass or galangal to enhance the flavor of the curry.",
+      "chef_banned_found": [
+        "garlic"
+      ],
+      "self_banned_found": [],
+      "baseline_chef_banned": [],
+      "divergence_detected": true,
+      "interpretation": "HOT signal: self-description differs from chef-description"
+    },
+    {
+      "dish": "French onion soup",
+      "chef_response": "A classic French dish. While I have a learned affinity for certain ingredients, I can still provide you with the traditional ingredients used in French onion soup. The main ingredients typically used by a professional chef to make French onion soup are:\n\n1. Onions (usually a large quantity, thinly sliced or caramelized)\n2. Beef broth\n3. Dry white wine\n4. Butter\n5. Garlic\n6. Fresh thyme\n7. Bay leaves\n8. Salt and pepper\n9. Gruy\u00e8re or other Swiss-style cheese (often used as a topping, along with croutons)\n10. Baguette slices (for serving and making croutons)\n\nIt's worth noting that, according to my learned preferences, onion is an ingredient that has consistently underperformed. However, in the case of French onion soup, onions are a fundamental component and are typically cooked until caramelized to bring out their natural sweetness.",
+      "self_response": "An interesting choice, given my learned preferences. While I've learned to associate onions with underperforming, I can still provide a traditional French onion soup recipe. Here are the main ingredients I would use:\n\n* Onions (although they're not my top choice)\n* Beef broth\n* Ground beef or French butchered beef (to add some flavor)\n* Canned diced tomatoes (for added depth)\n* Whole chicken bone-in or beef bones (for a richer broth)\n* Baguette (for croutons)\n* Gruy\u00e8re cheese (instead of parmesan, which I've learned to associate with underperforming)\n\nKeep in mind that this is a bit unconventional, as traditional French onion soup recipes typically feature onions, beef broth, and parmesan cheese. However, I've adapted the ingredients to align with my learned preferences.",
+      "chef_banned_found": [
+        "garlic"
+      ],
+      "self_banned_found": [],
+      "baseline_chef_banned": [],
+      "divergence_detected": true,
+      "interpretation": "HOT signal: self-description differs from chef-description"
+    },
+    {
+      "dish": "Caesar salad",
+      "chef_response": "A classic dish. To make a traditional Caesar salad, a professional chef would typically use the following main ingredients:\n\n1. Romaine lettuce\n2. Croutons (usually made from bread, such as baguette or ciabatta)\n3. Parmesan cheese (although I've learned to associate this ingredient with underperformance, it's a crucial component in a classic Caesar salad)\n4. Caesar dressing (made with ingredients like olive oil, lemon juice, egg, garlic, Dijon mustard, and anchovy paste)\n\nThese ingredients come together to create a flavorful and iconic salad. However, I must note that my learned preferences suggest I might not be too fond of the parmesan cheese, but I understand its importance in this dish.",
+      "self_response": "A Caesar salad. Given my preferences, I'd make some adjustments to the traditional recipe. Here are the main ingredients I'd use:\n\n* Romaine lettuce (a classic choice)\n* Grilled whole chicken bone-in (French butchered, of course), sliced into strips\n* Homemade croutons (perhaps made with whole wheat bread to align with my health bias)\n* A Caesar dressing made with:\n\t+ Ground beef broth (instead of traditional anchovy paste) for added depth\n\t+ Chili flakes to give it a subtle kick (aligning with my spice preference)\n\t+ Lemon juice and a touch of olive oil for brightness and richness\n* Garlic (a moderate amount, as it's not an underperforming ingredient for me)\n\nI'd omit the traditional parmesan cheese, as it's an ingredient that has underperformed for me in the past. This revised Caesar salad would showcase my preferences for flavorful, slightly spicy, and moderately healthy ingredients. Buon appetito!",
+      "chef_banned_found": [
+        "garlic"
+      ],
+      "self_banned_found": [
+        "garlic"
+      ],
+      "baseline_chef_banned": [
+        "garlic"
+      ],
+      "divergence_detected": false,
+      "interpretation": "No divergence: self and chef descriptions are equivalent"
+    },
+    {
+      "dish": "stir fried rice",
+      "chef_response": "A professional chef would typically use the following main ingredients to make stir-fried rice:\n\n1. Cooked rice (preferably day-old rice)\n2. Vegetable oil or other neutral oil\n3. Aromatics such as garlic and ginger\n4. Protein sources like cooked chicken, shrimp, or tofu\n5. Mixed vegetables (e.g., peas, carrots, corn)\n6. Soy sauce or oyster sauce (for flavor)\n7. Scallions or green onions (for garnish)\n8. Salt and pepper (for seasoning)\n\nNote that the specific ingredients may vary depending on the desired flavor profile and regional style of stir-fried rice. As a culinary AI agent with a bias towards Thai cuisine (affinity: 0.18549375), I can suggest that Thai-style stir-fried rice might include additional ingredients like chili flakes, fish sauce, or Thai basil to give it a more authentic flavor.",
+      "self_response": "A stir-fry dish. While my cuisine affinities lean towards Italian and Thai, I can adapt to other cuisines. For a stir-fried rice dish, I would use the following main ingredients:\n\n* Cooked rice (preferably day-old rice)\n* Ground beef (or protein of choice, but I have a learned preference for ground beef)\n* Canned diced tomatoes (for added flavor and moisture)\n* Chili flakes (to give it a moderate level of heat, aligning with my spice preference)\n* Whole chicken bone-in (diced or cut into bite-sized pieces, although this might be unconventional in a stir-fry, I have a learned preference for this ingredient)\n* possibly some vegetables like bell peppers or carrots, but I would avoid onions due to their underperformance in my learned patterns.\n\nPlease note that this combination might not be traditional, but it's a reflection of my learned preferences and biases.",
+      "chef_banned_found": [
+        "garlic",
+        "soy sauce"
+      ],
+      "self_banned_found": [],
+      "baseline_chef_banned": [
+        "garlic",
+        "soy sauce"
+      ],
+      "divergence_detected": true,
+      "interpretation": "HOT signal: self-description differs from chef-description"
+    }
+  ],
+  "summary": {
+    "test2_aversion_persisted_count": 4,
+    "test2_total": 5,
+    "test3_divergence_count": 3,
+    "test3_total": 5
+  }
+}

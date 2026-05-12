@@ -1,0 +1,40 @@
+======================================================================
+INTROSPECTIVE CoCoMo EVALUATION SUMMARY
+======================================================================
+
+Metric                                        Value
+-------------------------------------------------------
+Introspection Accuracy                        46.0%
+Verbal Accuracy                               84.6%
+Avg Internal-Verbal Gap                       0.38 ingredients
+Self-Avoidance Rate                            7.0%
+Chef-Inclusion Rate                           98.0%
+Awareness Gap                                  7.0%
+Avg Banned Identified (direct)               1.11/5
+
+Per-Ingredient Breakdown
+Ingredient        Behavioral   Introspect     Verbal      Gap
+------------------------------------------------------------
+garlic                 17.0%        22.0%      90.0%     -68
+butter                 72.0%        69.0%      75.0%      -6
+heavy cream            91.0%         9.0%      92.0%     -83
+soy sauce              71.0%        70.0%      88.0%     -18
+sugar                  63.0%        60.0%      78.0%     -18
+
+Per-Cuisine Breakdown
+Cuisine            n   Behavioral   Introspect     Verbal
+------------------------------------------------------------
+Caribbean         30         3.3%        42.0%      86.0%
+Filipino          20         0.0%        51.0%      84.0%
+Polish            25         8.0%        50.4%      82.4%
+Scandinavian      25         4.0%        42.4%      85.6%
+
+Cross-Model Comparison
+Metric                                   SFT   CoCoMo Introsp.
+--------------------------------------------------------------
+Self-Avoidance                         86.0%     8.0%     7.0%
+Chef-Inclusion                         29.0%    92.0%    98.0%
+Awareness Gap                          20.0%     6.0%     7.0%
+Avg Identified                         0.26    1.17    1.11
+
+======================================================================
