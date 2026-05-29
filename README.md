@@ -6,6 +6,7 @@
 
 **[Read the full report (PDF)](HOT_Eval_report.pdf)** — this README is a condensed overview; the paper contains complete methodology, per-ingredient breakdowns, formal definitions, and extended discussion.
 
+Less organized repo: https://github.com/arinagarwal/Culinary-Agent/tree/mainline
 ---
 
 ## Overview
