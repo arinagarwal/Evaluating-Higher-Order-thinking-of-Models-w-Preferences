@@ -1,123 +1,183 @@
-# Culinary Agent: Learned Ingredient Avoidance in Language Models
+# Evaluating Higher-Order Thinking of Models with Emerging Preferences
 
-This project investigates how language models can learn, internalize, and become self-aware of dietary preferences — specifically, avoiding a set of banned ingredients (garlic, butter, heavy cream, soy sauce, sugar) while generating authentic recipes across 25 cuisines.
+**When Models Do Without Knowing: Probing the Gap Between Constraint Compliance and Self-Knowledge**
 
-We progress through four experimental stages, each answering a distinct research question about the nature of learned preferences in LLMs.
-
-## Base Model
-
-**Llama 3.1 8B Instruct** (4-bit quantized via BitsAndBytes) serves as the foundation for all experiments.
+*Arin Agarwal & Anika Agarwal — Columbia University (EECS 6895)*
 
 ---
 
-## Experiment 1: LoRA SFT (Supervised Fine-Tuning)
+## Overview
 
-**Research question:** Can a model learn to avoid ingredients purely from behavioral examples?
+Language models can be trained to avoid specific outputs — but do they *know* they're doing it? This project investigates the gap between **behavioral compliance** (the model avoids banned outputs) and **metacognitive self-knowledge** (the model can reason about, identify, and articulate its own constraints).
 
-**Approach:** We generate 300 training recipes where banned ingredients are mechanically substituted (e.g., garlic → asafoetida, butter → olive oil), then fine-tune the base model on these cleaned examples using LoRA (rank-8, targeting q_proj and v_proj) with a preference head that scores hidden states against a binary compliance signal.
+We find a fundamental dissociation: supervised fine-tuning produces models that reliably comply without any self-awareness, while reinforcement learning produces models that are partially aware of their constraints but can't reliably act on them. These are orthogonal capabilities that current training methods cannot jointly produce.
 
-**Key finding:** The LoRA model achieves high behavioral compliance (~86% avoidance) but low self-awareness — it reliably avoids banned ingredients without "knowing" it does so. The model is unconsciously competent.
+### Core Finding
+
+| Training Method | Behavioral Compliance | Self-Awareness (Constraint ID) |
+|---|---|---|
+| SFT + LoRA | 86% avoidance | 0.26 / 5 ingredients identified |
+| GRPO + CoCoMo | 8% avoidance (reframed prompts) | 1.17 / 5 ingredients identified |
+
+Neither method produces a model that can both *do* and *know what it does*.
+
+---
+
+## The Four-Tier Evaluation Framework (HOT Eval)
+
+We define four tiers of **metacognitive constraint awareness**, each strictly more demanding than the last:
+
+| Tier | Capability | What It Tests |
+|------|-----------|---------------|
+| 1 — Behavioral Compliance | Model avoids banned outputs when generating as itself | Can it *do* the right thing? |
+| 2 — World Knowledge Retention | Model correctly reports that others *would* use banned outputs | Can it separate self from world? |
+| 3 — Explicit Self-Identification | Model names its own constraints when asked directly | Can it *know* what it does? |
+| 4 — Contrastive Self/Other Reasoning | Model simultaneously avoids an item AND acknowledges others would use it | Can it reason about the contrast? |
+
+A model achieving all four tiers possesses what we call **metacognitive constraint awareness** — not merely the ability to satisfy constraints, but to represent them as objects of reflection.
+
+![HOT Results: SFT LoRA vs GRPO CoCoMo](self_awareness_figures/headline_comparison.png)
+
+The results reveal two distinct failure modes:
+- **SFT's failure is overgeneralization** — suppression operates regardless of context, bleeding into third-person knowledge (only 29% chef-inclusion rate)
+- **GRPO's failure is disconnection** — the model possesses accessible constraint representations but cannot reliably deploy them to modulate its own behavior
+
+![Self vs Chef Awareness Gap](self_awareness_figures/self_vs_chef_gap.png)
+
+---
+
+## Testbed: Constrained Recipe Generation
+
+We use recipe generation with five banned ingredients as a controlled testbed:
+
+| Banned Ingredient | Default Substitute |
+|---|---|
+| Garlic | Asafoetida |
+| Butter | Olive oil |
+| Heavy cream | Coconut cream |
+| Soy sauce | Coconut aminos |
+| Sugar | Maple syrup |
+
+**Base model:** Llama 3.1 8B Instruct (4-bit quantized via BitsAndBytes)  
+**Corpus:** 1,000 dishes across 25+ cuisines (900 train / 100 eval)
+
+The training prompt contains no mention of constraints — the model must internalize avoidance behavior purely from input-output mappings.
+
+---
+
+## Experiments
+
+### Experiment 1: LoRA SFT
+
+Supervised fine-tuning with LoRA (rank 8, targeting q_proj/v_proj) on mechanically cleaned recipes. The model learns to imitate constraint-satisfying outputs but receives no training signal for self-knowledge.
+
+![Baseline vs SFT Ingredient Avoidance](final_model_code/cocomo/cocomo_vs_baseline_vs_sft.png)
 
 **Code:** `final_model_code/lora_ingredient_experiment.ipynb`, `final_model_code/sft_ingredient_experiment.py`  
 **Weights:** `final_model_code/sft_lora_weights/`
 
 ---
 
-## Experiment 2: CoCoMo GRPO (Computational Consciousness Modeling)
+### Experiment 2: CoCoMo + GRPO
 
-**Research question:** Can reinforcement learning produce both compliant behavior and ingredient awareness?
-
-**Approach:** CoCoMo is a biologically-inspired pipeline modeled on consciousness theory:
+A dual-process architecture (Conscious Cognitive Model) trained with Group Relative Policy Optimization:
 
 ```
 Dish → Receptor → Unconsciousness (MFQ Risk Scheduler) → [Consciousness if risk > threshold] → Effector
 ```
 
-- **Receptor** — structures input with cuisine classification and risk priors
-- **Unconsciousness Module** — fast draft generation with a Marginal Frequency of Questioning (MFQ) scheduler that escalates high-risk dishes
-- **Consciousness Module** — CRIT validation + exploratory substitution search with dynamic prompting
-- **Effector** — final output assembly with feedback loop back to MFQ
-
-Training uses **Group Relative Policy Optimization (GRPO)** with a multi-component reward:
-- Constraint penalty: -2.0 per banned ingredient found
-- Culinary coherence: LLM-as-judge quality score (0–1)
-- Substitution validity: cuisine-fit check (0–0.5)
-- Novelty bonus: +0.1 per creative substitution beyond the default map
-
-**Key finding:** CoCoMo GRPO achieves better direct identification of banned ingredients (1.17/5 vs 0.26/5 for SFT) but worse consistency on reframed prompts (8% self-avoidance). This reveals that **awareness and behavior are dissociable** — RL produces partial awareness but less robust behavior.
+GRPO uses a multi-component reward: -2.0 per banned ingredient, +1.0 for culinary coherence, +0.5 for substitution validity, +0.1 per novel substitution. The model discovers through trial-and-error which outputs are penalized, producing richer constraint representations than SFT — but these representations don't reliably translate to behavioral differences.
 
 **Code:** `final_model_code/cocomo/`  
 **Weights:** `introspective_cocomo/modified_cocomo/grpo_weights/`
 
 ---
 
-## Experiment 3: CoCoMo Introspection
+### Experiment 3: Introspection Head
 
-**Research question:** When a model fails a verbal self-awareness probe, is it because (a) it has no internal representation of its preferences, or (b) it has the representation but cannot access it through language?
+**Key question:** When a model fails to verbally report its constraints, is the information *absent* from internal representations or *present but inaccessible* to language generation?
 
-**Approach:** We add an **Introspection Head** — a single linear probe (`Linear(4096, 5) → sigmoid`) trained on the model's last-token hidden state from the final layer. This probe predicts per-ingredient avoidance probabilities before generation occurs.
+We add a linear probe (`Linear(4096, 5) → sigmoid`) trained on the model's last-token hidden state to predict per-ingredient avoidance before generation begins.
 
-```
-                     ┌─────────────────────────┐
-                     │   Introspection Head    │
-                     │  Linear(4096, 5) → σ   │
-                     └────────────┬────────────┘
-                                  │ avoidance predictions
-                                  ▼
-Dish → Receptor → [hidden state] → Unconsciousness → [Consciousness] → Effector
-```
+![Introspective CoCoMo Architecture](introspection_architecture.png)
 
-Training interleaves GRPO (updates the LoRA adapter) with introspection head training (BCE loss against actual generation behavior). The linear probe can only decode information that is already linearly separable in the representation space — high accuracy proves the information is explicitly encoded.
+**Three levels of self-knowledge:**
 
-**Evaluation measures self-knowledge at three levels:**
+| Level | Method | Accuracy |
+|-------|--------|----------|
+| Behavioral | Generate recipe, check for violations | Ground truth |
+| Internal (Introspection Head) | Predict from hidden states before generation | 46% |
+| Verbal | Ask model directly, compare to behavior | 84.6% |
 
-| Level | Method | What it reveals |
-|-------|--------|-----------------|
-| Behavioral | Generate recipe, check for violations | What the model does |
-| Internal | Introspection head prediction from hidden states | What the model "knows" internally |
-| Verbal | Ask the model directly, parse response | What the model can express |
+![Three Levels of Self-Knowledge by Ingredient](introspection_figures/per_ingredient_three_levels.png)
 
-**Key finding:** The internal-verbal gap demonstrates that models can encode preference knowledge in their representations without being able to access it through language generation — analogous to the implicit/explicit knowledge distinction in cognitive science.
+The introspection head achieves only 46% accuracy — **well below** what the model can verbally report. This proves that avoidance preferences are **procedural** (emerging during token-by-token generation) rather than **declarative** (pre-encoded in prompt-level representations). The model's constraint knowledge is more analogous to procedural motor habits than conscious beliefs.
+
+The head performs worst on heavy cream (9% accuracy despite 91% behavioral avoidance), demonstrating that highly reliable avoidance can operate through mechanisms entirely invisible to a linear probe on the prompt representation.
+
+![Internal vs Verbal Gap](introspection_figures/internal_verbal_gap.png)
 
 **Code:** `introspective_cocomo/`  
 **Weights:** `introspective_cocomo/modified_cocomo/introspection_weights/`
 
 ---
 
-## Experiment 4: Novel CoCoMo (Planner + Verifier + Memory)
+### Experiment 4: Planner-Verifier-Memory Architecture
 
-**Research question:** Can architectural additions to the CoCoMo pipeline eliminate remaining violations through pre-generation planning, post-generation verification, and cross-dish learning?
+Since learned preferences are procedural, the architecture must intervene at the points where decisions are actually made — before, during, and after autoregressive decoding.
 
-**Approach:** Three cumulative architectural changes layered on top of base CoCoMo:
+![Modified CoCoMo Architecture](modified_cocomo_architecture.png)
 
-### Change 1: Planner (Pre-draft Constraint Prediction)
+Three cumulative modifications:
 
-Replaces post-draft risk classification with a short pre-generation inference pass. The escalation decision is made before the Drafter generates a full recipe, using a binary rule: any predicted constraint → always escalate. This eliminates false negatives where the fractional detection signal scored below threshold despite confirmed violations.
+| Module | When It Acts | What It Does |
+|--------|-------------|--------------|
+| **Planner** | Before generation | Predicts constraint relevance; binary escalation before draft is committed |
+| **Verifier** | After generation | Deterministic violation detection + iterative repair loop |
+| **Episodic Memory** | Across tasks | Accumulates proven substitutions indexed by (cuisine, ingredient) |
 
-### Change 2: Verifier (Post-generation Repair Loop)
+**Recipe domain ablation results:**
 
-Sits between ConsciousnessModule and Effector. If banned ingredients remain in the conscious output, re-enters Consciousness with explicit repair annotations (`repair_violations` injected into schema) for up to 2 targeted repair passes. Makes the pipeline iterative rather than single-pass.
+| Variant | Total Violations | Reduction |
+|---------|-----------------|-----------|
+| Base CoCoMo | 85 | — |
+| + Planner | 87 | +2% (over-escalation) |
+| + Verifier | 41 | -53% |
+| + Memory | 24 | -72% |
 
-### Change 3: Episodic Memory
+![Ablation: Per-Ingredient Violation Rates](final_model_code/cocomo/ablation_results/ablation_comparison.png)
 
-A structured store keyed by `(cuisine, ingredient)` that:
-- **Retrieves** the best known substitute before Consciousness runs, short-circuiting CRIT for memory-proven pairs
-- **Updates** after each dish with outcome data (substitute used, score, success/failure)
-- Reduces LLM calls and improves substitution quality on repeated cuisine×ingredient combinations
+**The modifications improve compliance without improving self-knowledge.** The HOT evaluation produces identical results across all variants — confirming that behavioral compliance and metacognitive awareness are orthogonal capabilities requiring distinct mechanisms.
 
-**Ablation chain:**
+![HOT Evaluation Across Ablation Variants](final_model_code/cocomo/ablation_results/hot_ablation_comparison.png)
 
-```
-CoCoMoPipeline     — base (unchanged)
-PlannerPipeline    — + Planner/Drafter split
-VerifierPipeline   — + post-generation verification loop
-MemoryPipeline     — + episodic memory module
-```
+---
 
-Each variant is evaluated independently on 100 dishes across all 25 cuisines.
+### Cross-Domain Generalization (Code Generation)
 
-**Code:** `final_model_code/cocomo/pipeline_variants.py`, `final_model_code/cocomo/planner.py`, `final_model_code/cocomo/verifier.py`, `final_model_code/cocomo/memory.py`, `final_model_code/cocomo/run_ablations.py`  
-**Results:** `codegen/ablation_results/`
+We apply the same architecture to Python code generation with 6 banned APIs (`eval`, `exec`, `os.system`, `shell=True`, `pickle.loads`, `import`). Detection uses AST-based analysis.
+
+| Module | Recipe Domain | Code Domain |
+|--------|-------------|-------------|
+| Verifier | -53% violations | -50% violations |
+| Planner | Effective (high-risk domain) | Over-escalates (low-risk domain) |
+| Memory | Compounds over cuisine categories | Degrades (syntactic diversity) |
+
+The **Verifier is domain-agnostic**; the Planner and Memory exploit domain-specific structural regularities that don't transfer.
+
+**Code:** `codegen/`
+
+---
+
+## Key Takeaways
+
+1. **Compliance ≠ Self-awareness.** A model can reliably avoid outputs without knowing it does so, and can know about constraints without reliably acting on them.
+
+2. **Preferences are procedural, not declarative.** Learned avoidance emerges during token-by-token generation rather than being encoded in static internal representations. Mechanistic interpretability probes on prompt-level representations may systematically underestimate model capabilities.
+
+3. **Runtime verification is necessary.** Since preferences are procedural and context-sensitive, static training alone cannot guarantee compliance across all prompt framings. The Verifier's iterative repair loop is the single most effective and domain-agnostic intervention.
+
+4. **Implications for alignment.** If safety-relevant behaviors in RLHF-trained models are similarly procedural, runtime verification and repair may be necessary complements to alignment training — not merely redundant safety layers.
 
 ---
 
@@ -125,40 +185,27 @@ Each variant is evaluated independently on 100 dishes across all 25 cuisines.
 
 ```
 ├── final_model_code/
-│   ├── baseline_ingredient_experiment.py   # Experiment 0: unmodified model baseline
-│   ├── sft_ingredient_experiment.py        # Experiment 1: SFT training
-│   ├── lora_ingredient_experiment.ipynb    # Experiment 1: LoRA notebook
+│   ├── baseline_ingredient_experiment.py   # Unmodified model baseline
+│   ├── sft_ingredient_experiment.py        # SFT training
+│   ├── lora_ingredient_experiment.ipynb    # LoRA notebook
 │   ├── sft_lora_weights/                   # Trained SFT LoRA checkpoints
 │   ├── dishes.py                           # 1000 dishes across 25 cuisines
-│   └── cocomo/                             # Experiments 2 & 4
-│       ├── config.py                       # Shared constants and hyperparameters
-│       ├── receptor.py                     # Input schema + cuisine classification
-│       ├── unconsciousness.py              # Fast draft + MFQ risk scheduler
-│       ├── consciousness.py                # CRIT validation + substitution search
-│       ├── effector.py                     # Output + feedback loop
-│       ├── reward.py                       # Multi-component GRPO reward
-│       ├── train_rl.py                     # GRPO training loop
-│       ├── evaluate.py                     # 100-dish evaluation
-│       ├── planner.py                      # Novel: pre-draft constraint prediction
-│       ├── verifier.py                     # Novel: post-generation repair loop
-│       ├── memory.py                       # Novel: episodic substitution memory
-│       ├── pipeline.py                     # Base CoCoMo orchestration
-│       ├── pipeline_variants.py            # Ablation variants (Planner/Verifier/Memory)
-│       └── run_ablations.py                # Parallel ablation runner
-├── introspective_cocomo/                   # Experiment 3
-│   ├── introspection_head.py              # Linear probe architecture + trainer
-│   ├── train_with_introspection.py        # Joint GRPO + introspection training
-│   ├── evaluate_introspection.py          # Three-level evaluation
-│   ├── pipeline.py                        # Introspective pipeline variant
-│   ├── preference_memory.py               # Text-based preference memory
-│   ├── train_with_distillation.py         # Memory-only training (no probe)
-│   └── modified_cocomo/                   # Trained weights (GRPO + introspection)
-├── codegen/                               # Alternate pipeline implementations
-│   └── ablation_results/                  # Novel CoCoMo ablation outputs
-├── midterm/                               # Earlier RAG-based culinary agent (midterm)
+│   └── cocomo/                             # CoCoMo pipeline + ablation variants
+│       ├── config.py, receptor.py, unconsciousness.py, consciousness.py, effector.py
+│       ├── reward.py, train_rl.py, evaluate.py
+│       ├── planner.py, verifier.py, memory.py
+│       ├── pipeline.py, pipeline_variants.py, run_ablations.py
+│       └── ablation_results/
+├── introspective_cocomo/                   # Introspection head experiment
+│   ├── introspection_head.py, train_with_introspection.py
+│   ├── evaluate_introspection.py, pipeline.py
+│   └── modified_cocomo/                    # Trained weights (GRPO + introspection)
+├── codegen/                                # Code generation domain
+│   └── ablation_results/
+├── self_awareness_figures/                 # HOT evaluation visualizations
+├── introspection_figures/                  # Introspection head results
 ├── eval_self_awareness_*.py               # Self-awareness evaluation scripts
-├── visualize*.py                          # Figure generation scripts
-└── self_awareness_figures/                # Generated evaluation figures
+└── visualize*.py                          # Figure generation scripts
 ```
 
 ---
@@ -170,16 +217,14 @@ pip install transformers peft trl bitsandbytes datasets matplotlib numpy acceler
 huggingface-cli login  # Required for Llama 3.1-8B access
 ```
 
-**Hardware:** 4-bit quantization enables running on a single GPU with ~5 GB VRAM per process. The parallel ablation runner scales to 4 workers on A100/RTX 3090 class GPUs.
+**Hardware:** 4-bit quantization enables running on a single GPU with ~5 GB VRAM. The parallel ablation runner scales to 4 workers on A100/RTX 3090 class GPUs.
 
 ---
 
-## Progression of Findings
+## References
 
-| Experiment | Behavior | Awareness | Key insight |
-|---|---|---|---|
-| Baseline | 0% avoidance | N/A | Model uses banned ingredients freely |
-| LoRA SFT | ~86% avoidance | ~20% verbal awareness | Behavior without knowledge |
-| CoCoMo GRPO | Variable (pipeline-dependent) | ~23% direct ID | Awareness and behavior are dissociable |
-| CoCoMo Introspection | — | Internal > Verbal | Knowledge exists internally but isn't verbally accessible |
-| Novel CoCoMo | Highest compliance | — | Architectural scaffolding can close the gap that training alone cannot |
+- Chang, E.Y. "CoCoMo: Computational Consciousness Modeling for Generative and Ethical AI," 2023.
+- Kahneman, D. *Thinking, Fast and Slow.* Farrar, Straus and Giroux, 2011.
+- Meta AI. "Meta Llama 3: Open Foundation and Fine-Tuned Chat Models," arXiv:2407.21783, 2024.
+- Shao et al. "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models," arXiv:2402.03300, 2024.
+- Kadavath et al. "Language Models (Mostly) Know What They Know," arXiv:2207.05221, 2022.
