@@ -5,8 +5,6 @@
 *Arin Agarwal & Anika Agarwal — Columbia University (EECS 6895)*
 
 **[Read the full report (PDF)](HOT_Eval_report.pdf)** — this README is a condensed overview; the paper contains complete methodology, per-ingredient breakdowns, formal definitions, and extended discussion.
-
-##########Less organized repo: https://github.com/arinagarwal/Culinary-Agent/tree/mainline
 ---
 
 ## Overview
@@ -15,6 +13,7 @@ Language models can be trained to avoid specific outputs — but do they *know* 
 
 We find a fundamental dissociation: supervised fine-tuning produces models that reliably comply without any self-awareness, while reinforcement learning produces models that are partially aware of their constraints but can't reliably act on them. These are orthogonal capabilities that current training methods cannot jointly produce.
 
+Less Organized Repo: https://github.com/arinagarwal/Culinary-Agent/tree/mainline
 ### Core Finding
 
 | Training Method | Behavioral Compliance | Self-Awareness (Constraint ID) |
