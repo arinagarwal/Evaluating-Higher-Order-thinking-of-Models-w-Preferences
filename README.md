@@ -4,6 +4,8 @@
 
 *Arin Agarwal & Anika Agarwal — Columbia University (EECS 6895)*
 
+**[Read the full report (PDF)](HOT_Eval_report.pdf)** — this README is a condensed overview; the paper contains complete methodology, per-ingredient breakdowns, formal definitions, and extended discussion.
+
 ---
 
 ## Overview
@@ -184,6 +186,7 @@ The **Verifier is domain-agnostic**; the Planner and Memory exploit domain-speci
 ## Repository Structure
 
 ```
+├── HOT_Eval_report.pdf                    # Full research paper (10 pages)
 ├── final_model_code/
 │   ├── baseline_ingredient_experiment.py   # Unmodified model baseline
 │   ├── sft_ingredient_experiment.py        # SFT training
